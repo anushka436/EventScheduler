@@ -1,156 +1,126 @@
-package project;
+package eventsc;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
 
-class Event {
+class EventS {
     int start, end;
-
-    public Event(int start, int end) {
+    public EventS(int start, int end) {
         this.start = start;
         this.end = end;
     }
 }
 
 public class EventSchedulerGUI extends JFrame {
-    private JTextField numEventsField;
-    private JPanel inputPanel;
-    private JButton submitButton, scheduleButton;
-    private JTextArea resultArea;
-    private Event[] events;
+    private final DefaultTableModel inputModel = new DefaultTableModel(new String[]{"Start", "End"}, 0);
+    private final DefaultTableModel venue1Model = new DefaultTableModel(new String[]{"Start", "End"}, 0);
+    private final DefaultTableModel venue2Model = new DefaultTableModel(new String[]{"Start", "End"}, 0);
+
+    private final JTextField startField = new JTextField(5);
+    private final JTextField endField = new JTextField(5);
+    private final List<EventS> events = new ArrayList<>();
 
     public EventSchedulerGUI() {
-        setTitle("Event Scheduler (2 Venues)");
+        setTitle("🌸 Event Scheduler");
         setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
 
-        // Top panel
-        JPanel topPanel = new JPanel();
-        topPanel.add(new JLabel("Enter number of events:"));
-        numEventsField = new JTextField(5);
-        topPanel.add(numEventsField);
-        submitButton = new JButton("Submit");
-        topPanel.add(submitButton);
-        add(topPanel, BorderLayout.NORTH);
+        getContentPane().setBackground(new Color(255, 240, 245)); // light pink background
+        setLayout(new BorderLayout(10, 10));
 
-        // Input panel
-        inputPanel = new JPanel();
-        inputPanel.setLayout(new GridLayout(0, 2, 5, 5));
-        add(new JScrollPane(inputPanel), BorderLayout.CENTER);
+        // Input Panel
+        JPanel inputPanel = new JPanel();
+        inputPanel.setBackground(new Color(255, 228, 225));
+        inputPanel.add(new JLabel("Start Time:"));
+        inputPanel.add(startField);
+        inputPanel.add(new JLabel("End Time:"));
+        inputPanel.add(endField);
 
-        // Bottom panel
-        JPanel bottomPanel = new JPanel();
-        scheduleButton = new JButton("Schedule Events");
-        scheduleButton.setEnabled(false);
-        bottomPanel.add(scheduleButton);
-        add(bottomPanel, BorderLayout.SOUTH);
+        JButton addButton = new JButton("➕ Add Event");
+        addButton.addActionListener(e -> addEvent());
+        inputPanel.add(addButton);
 
-        // Result area
-        resultArea = new JTextArea(20, 25);
-        resultArea.setEditable(false);
-        add(new JScrollPane(resultArea), BorderLayout.EAST);
+        JButton scheduleButton = new JButton("📅 Schedule Events");
+        scheduleButton.addActionListener(e -> scheduleEvents());
+        inputPanel.add(scheduleButton);
 
-        // Action for Submit
-        submitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int n = Integer.parseInt(numEventsField.getText());
-                    if (n <= 0) {
-                        JOptionPane.showMessageDialog(null, "Enter a valid number of events.");
-                        return;
-                    }
-                    events = new Event[n];
-                    inputPanel.removeAll();
+        add(inputPanel, BorderLayout.NORTH);
 
-                    for (int i = 0; i < n; i++) {
-                        inputPanel.add(new JLabel("Start " + (i + 1) + ":"));
-                        inputPanel.add(new JTextField(5));
-                        inputPanel.add(new JLabel("End " + (i + 1) + ":"));
-                        inputPanel.add(new JTextField(5));
-                    }
+        // Tables
+        JTable inputTable = new JTable(inputModel);
+        JTable venue1Table = new JTable(venue1Model);
+        JTable venue2Table = new JTable(venue2Model);
 
-                    inputPanel.revalidate();
-                    inputPanel.repaint();
-                    scheduleButton.setEnabled(true);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Enter a valid number.");
-                }
-            }
-        });
+        JScrollPane inputScroll = new JScrollPane(inputTable);
+        JScrollPane v1Scroll = new JScrollPane(venue1Table);
+        JScrollPane v2Scroll = new JScrollPane(venue2Table);
 
-        // Action for Schedule
-        scheduleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Component[] components = inputPanel.getComponents();
-                int index = 0;
-                boolean valid = true;
+        inputScroll.setBorder(BorderFactory.createTitledBorder("📝 Input Events"));
+        v1Scroll.setBorder(BorderFactory.createTitledBorder("🏛 Venue 1"));
+        v2Scroll.setBorder(BorderFactory.createTitledBorder("🏛 Venue 2"));
 
-                for (int i = 0; i < events.length; i++) {
-                    try {
-                        JTextField startField = (JTextField) components[index + 1];
-                        JTextField endField = (JTextField) components[index + 3];
-                        int start = Integer.parseInt(startField.getText());
-                        int end = Integer.parseInt(endField.getText());
+        JPanel tablesPanel = new JPanel(new GridLayout(1, 3, 10, 10));
+        tablesPanel.add(inputScroll);
+        tablesPanel.add(v1Scroll);
+        tablesPanel.add(v2Scroll);
+        tablesPanel.setBackground(new Color(255, 240, 245));
 
-                        if (start >= end) {
-                            JOptionPane.showMessageDialog(null, "Start must be less than end for event " + (i + 1));
-                            valid = false;
-                            break;
-                        }
-
-                        events[i] = new Event(start, end);
-                        index += 4;
-                    } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(null, "Enter valid numbers.");
-                        valid = false;
-                        break;
-                    }
-                }
-
-                if (valid) {
-                    String output = scheduleEventsTwoVenues(events);
-                    resultArea.setText(output);
-                }
-            }
-        });
-
-        setVisible(true);
+        add(tablesPanel, BorderLayout.CENTER);
     }
 
-    public static String scheduleEventsTwoVenues(Event[] events) {
-        // Sort by end time
-        Arrays.sort(events, Comparator.comparingInt(e -> e.end));
+    private void addEvent() {
+        try {
+            int start = Integer.parseInt(startField.getText());
+            int end = Integer.parseInt(endField.getText());
+            if (start >= end) {
+                JOptionPane.showMessageDialog(this, "Start time must be less than end time!");
+                return;
+            }
+            events.add(new EventS(start, end));
+            inputModel.addRow(new Object[]{start, end});
+            startField.setText("");
+            endField.setText("");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Please enter valid integers for start and end times.");
+        }
+    }
 
-        StringBuilder result = new StringBuilder("Event Schedule for 2 venues:\n");
+    private void scheduleEvents() {
+        venue1Model.setRowCount(0);
+        venue2Model.setRowCount(0);
 
-        int lastEndVenue1 = -1;
-        int lastEndVenue2 = -1;
+        List<EventS> sortedEvents = new ArrayList<>(events);
+        sortedEvents.sort(Comparator.comparingInt(e -> e.end));
 
-        // Normal for loop to iterate through events
-        for (int i = 0; i < events.length; i++) {
-            Event e = events[i];
-            if (e.start >= lastEndVenue1) {
-                result.append("Venue 1: (").append(e.start).append(", ").append(e.end).append(")\n");
-                lastEndVenue1 = e.end;
-            } else if (e.start >= lastEndVenue2) {
-                result.append("Venue 2: (").append(e.start).append(", ").append(e.end).append(")\n");
-                lastEndVenue2 = e.end;
+        List<EventS> venue1 = new ArrayList<>();
+        List<EventS> venue2 = new ArrayList<>();
+
+        int endTime1 = 0, endTime2 = 0;
+        for (EventS e : sortedEvents) {
+            if (e.start >= endTime1) {
+                venue1.add(e);
+                endTime1 = e.end;
+                venue1Model.addRow(new Object[]{e.start, e.end});
+            } else if (e.start >= endTime2) {
+                venue2.add(e);
+                endTime2 = e.end;
+                venue2Model.addRow(new Object[]{e.start, e.end});
             } else {
-                result.append("Skipped: (").append(e.start).append(", ").append(e.end).append(")\n");
+                JOptionPane.showMessageDialog(this,
+                    "Unable to schedule event (" + e.start + ", " + e.end + ") in any venue.");
             }
         }
-
-        return result.toString();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new EventSchedulerGUI());
-    }
+        SwingUtilities.invokeLater(() -> {
+            EventSchedulerGUI gui = new EventSchedulerGUI();
+            gui.setVisible(true);
+        });
+    }
 }
+
