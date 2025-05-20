@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Event Scheduling System</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Event Scheduling System</h1>
+  </header>
+
+  <main>
+    <section class="input-section">
+      <h2>Add Event</h2>
+      <form id="eventForm">
+        <label for="startTime">Start Time:</label>
+        <input type="number" id="startTime" name="startTime" min="0" max="24" required />
+        <label for="endTime">End Time:</label>
+        <input type="number" id="endTime" name="endTime" min="0" max="24" required />
+        <button type="submit">Add Event</button>
+      </form>
+    </section>
+
+    <section class="venues">
+      <div>
+        <h2>🏛 Venue 1</h2>
+        <ul id="venue1List" class="venue-list"></ul>
+      </div>
+      <div>
+        <h2>🏛 Venue 2</h2>
+        <ul id="venue2List" class="venue-list"></ul>
+      </div>
+      <div>
+        <h2>🏛 Venue 3</h2>
+        <ul id="venue3List" class="venue-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
